@@ -1,0 +1,277 @@
+fsharpi
+
+
+Il seguente test si compone di due esercizi, che verrano corretti a
+alto livello, ma non valutati. 
+
+La sessione di consegna rimarra' aperta fino a lunedi' 31 marzo.
+E' possibile caricare piu' copie dello stesso file e anche scaricare
+il materiale consegnato.
+Verra' guardata solamente l'ultima versione dei file consegnati.
+
+
+I file contenente il codice vanno caricati alla pagina
+
+    https://upload.di.unimi.it/
+
+I file da caricare sono:
+
+esami.fs  (esercizio 1)
+dc.fs     (esercizio 2)
+
+Va inoltre caricato un file
+
+info.txt
+
+contenente le seguenti righe (da copiare e completare):
+
+
+NOME:
+
+COGNOME: 
+
+MATRICOLA:
+
+CORSO DI LAUREA:
+
+ANNO DI CORSO:
+
+Quali linguaggi di programmazione conosci?
+
+Hai seguito altri corsi con elementi di programmazione funzionale? Se si', indicare quale.
+
+===========================================================================
+
+Parte (A) ESAMI
+
+Una valutazione numerica e' una coppia della forma   (studente, voto)
+laddove una valutazione a giudizio è una coppia   (studente, giudizio)
+
+dove:
+
+- studente e giudizio e' una stringa;
+- voto un intero.
+
+0) Dare delle type abbreviations per le valutazioni
+
+type valV = ...
+type valG = ...
+
+type
+
+1) Definire una funzione
+
+   valuta :  valV  ->   valG
+
+che, dato il nome di uno studente e il voto, restituisce la coppia
+
+   (studente, giudizio)
+
+dove il giudizio e' definita secondo la seguente tabella:
+ 
+ meno di 18   --->        insufficiente   
+ da 18 a 22   --->        sufficiente  
+ da 23 a 27   --->        buono 
+ piu' di 27   --->        ottimo
+
+NOTA: Nella definizione della funzione "valuta", consigliamo di dichiarare
+esplicitamente il tipo del parametro studente per evitare inutile
+polimorfismo.
+
+Esempio
+------
+
+> valuta ("Bianchi",  16) 
+val it : string * string = ("Bianchi", "insufficiente")
+
+-------------------------------------------------------------------
+
+2)  Definire la funzione
+
+ valutaList : valV list -> valG list
+
+che trasforma una lista di valutazioni (studente,voto) 
+in una lista di valutazioni (studente,giudizio).
+
+In prima istanza si richiede di *NON* usare le funzioni nella
+collection List, anzi si usi nel testing questa property:
+
+let `` valutaList è una map di valuta`` (xs : valV list)  =
+  List.map valuta xs = valutaList xs;;
+Check.Quick  `` valutaList è una map di valuta``
+
+
+Esempio
+--------
+
+ valutaList [ ("Bianchi", 16) ; ("Rossi" , 20) ; ( "Verdi",  24 ) ; ( "Neri" , 29) ]
+
+deve costruire la lista
+
+ [("Bianchi", "insufficiente"); ("Rossi", "sufficiente"); ("Verdi", "buono"); ("Neri", "ottimo")]
+
+--------------------------------------------------------------------------
+
+3)  Definire  la funzione
+
+    creaValList : (string list * int list) -> (int * voto) list
+
+che, data una lista di studenti e una lista di voti, crea la lista
+delle valutazioni (studente,voto).  Se le liste non hanno la stessa
+lunghezza, la parte in eccedenza non viene considerata.
+
+Esempio
+-------
+
+let st1 = [ "Alpi" ; "Brambilla" ; "Ceri" ;  "Dusi" ;  "Elba" ;  "Ferrari" ;  "Gigli " ; "Ibis" ];;
+let st2 = [ "Verdi" ; "Rossi" ] ;;
+let voti1 = [ 16 ; 24 ; 28 ; 18 ; 15 ;  23 ; 30  ;28 ] ;;   
+let voti2 =  [ 24 ; 18 ; 30 ; 28 ];;
+let valList1 = creaValList (st1, voti1);;
+let valList2 = creaValList (st1, voti2);;
+let valList3 = creaValList (st2, voti1);;
+
+
+valList1 =  
+[("Alpi", 16); ("Brambilla", 24); ("Ceri", 28); ("Dusi", 18); ("Elba", 15); ("Ferrari", 23); ("Gigli ", 30); ("Ibis", 28)]
+
+valList2 = [("Alpi", 24); ("Brambilla", 18); ("Ceri", 30); ("Dusi", 28)]
+
+valList3 = [("Verdi", 16); ("Rossi", 24)]
+
+Si usi poi questa property tenendo presente che è lenta (più di un minuto)
+
+let prop_vs =
+  let sameLen = Arb.filter  (fun (xs,ys) ->
+                             List.length xs = List.length ys) Arb.from<list<string> * list<int>>
+  Prop.forAll sameLen (fun (ss ,vs ) ->
+                       creaValList (ss,vs) = List.zip ss vs)
+Check.Quick prop_vs
+
+4) Definire la funzione
+
+   media : valV list -> float
+
+che data una lista di  valutazioni (studente,voto), calcola la media dei voti.
+
+La funzione può usare la definizione (possibilmente locale, cioè  al
+suo interno) di una  funzione 
+
+  sommaAndConta : valV list  -> int * int
+
+che, data una lista vList di valutazioni (studente,voto), calcola
+**simultaneamente** (cioe' in una unica passata) la coppia
+
+  (sommaVoti,count)
+
+dove sommaVoti e' la somma dei voti in vList e count il numero di
+valutazioni, cioe' la lunghezza in vList.
+
+Esempi
+----- 
+
+let media1 = media valList1
+let media2 = media valList2
+let media3 = media valList3
+
+media1 = 22.75 ,  media2 = 25.0  , media3 = 20.0
+
+Controllare questa property
+
+let  ``media equivalenta a unzip + averageBy`` (vs : valV list) =
+  let media_ho l1 = 
+    let (_,l2) = List.unzip l1 
+    List.averageBy float  l2
+  vs <> [] ==> lazy ( media vs = media_ho vs);;
+Check.Quick  ``media equivalenta a unzip + averageBy``;;
+
+
+5) Definire la funzione 
+
+ separa : valV list -> valV list * valV list
+
+che, data una lista di valutazioni numeriche (studente,voto), crea due liste di
+valutazioni numeriche, la lista dei bocciati (voto < 18) e la lista dei promossi
+(voto>= 18).
+
+Proprietà: 
+
+let ``due liste risultato hanno stessi elementi di vs`` (vs : valV list) =
+  let (bs,ps) = separa vs
+  List.sort vs = List.sort (bs @ ps)
+Check.Quick ``due liste risultato hanno stessi elementi di vs`` 
+
+---------
+Esempi
+
+let  (bocciati,promossi )  = separa  valList1 
+
+bocciati = [("Alpi", 16); ("Elba", 15)]
+
+promossi =  [("Brambilla", 24); ("Ceri", 28); ("Dusi", 18); ("Ferrari", 23); ("Gigli ", 30); ("Ibis", 28)]
+
+Notare che
+
+ separa bocciati
+
+e' la coppia  ( [("Alpi", 16); ("Elba", 15)] , [] )
+
+mentre
+
+ separa promossi
+
+e' la coppia
+
+( [] , 
+  [("Brambilla", 24); ("Ceri", 28); ("Dusi", 18); ("Ferrari", 23); ("Gigli ", 30); ("Ibis", 28)]
+)
+
+======================================================================================================
+
+PARTE B) DAYCARE
+
+A day-care looks after children in 3 ways: as Daycare, as a Nursery,
+as as Recreation. This yields the following type
+
+  type category =
+    | Daycare
+    | Nursery
+    | Recreation
+
+A child is described by its surname and category
+
+i. Declare suitable types "names" and "childDes" to model the above.
+   (Hint: a type abbreviation is enough for names, a tagged type is
+   suitable for the other)
+
+ii. declare a function 
+
+    number : category * (childDes list) -> int
+
+    which counts the number of children that belong to a certain
+    category
+
+ii' Write a property that (partally) validate the number function and
+    then quickcheck it. For example you could relate the output to the
+    lenght of childDes list
+
+Parents are charged monthly $225 for Daycare, $116 for Nursery and
+$110 for Recreation. However large families have a discount: if a
+family has more than one child attending the day-care, the first child
+pays full charge, the other siblings half.
+
+iii. Write a function 
+
+     pay  : name * childDes list -> float
+
+     that computes how much a family named "name" pays given a list of childDes 
+
+- you can assume that childDes list is sorted according to categories,
+  so it lists first Daycare attendees, then Nursery etc 
+
+- you may want to define a function, say remove, which determines if a
+   child of a given surname is in the list: If so, this is the child that pays full
+  price, while his siblings in the rest of the list will pay half.
+
+iv. Write some tests and run your program.
+

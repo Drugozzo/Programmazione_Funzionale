@@ -1,0 +1,307 @@
+ESERCIZI SU OPTION TYPE
+=======================
+
+
+ESERCIZIO 1
+===========
+
+Definire la funzione sommaArea che, date due figure fig1 e fig2,
+restituisce la somma delle areee delle due figure, se  definita.
+Il risultato deve essere un option type.
+Per calcolare l'area, usare la funzione areaOpt definita a lezione. 
+
+Esempi: 
+
+let sum1 = sommaArea ( Rettangolo(2,5) , (Quadrato 10) ) ;;
+//  val sum1 : float option = Some 110.0
+
+let sum2 = sommaArea ( Rettangolo(2,-5),  (Quadrato 10) ) ;;
+// val sum2 : float option = None
+
+let sum3 = sommaArea ( Rettangolo(2, 5), (Quadrato -10) ) ;;
+// val sum3 : float option = None
+
+let sum4 =  sommaArea ( Triangolo(10,5), Triangolo(3,5)) ;;
+// val sum4  : float option = Some 32.5
+
+
+let sommaArea (f1,f2)=
+	match areaOpt f1, areaOpt f2 with
+	|Some a1, Some a2-> Some (a1+a2)
+	| _, None | None, _ ->None;;
+
+_____________________________________________________________________________________________
+
+
+ESERCIZIO 2
+===========
+
+Definire le seguenti funzioni su liste in cui utilizzano option type;
+non vanno usate le funzioni predefinite su liste.
+
+Per ogni funzione viene  proposta qualche proprieta' da verificare con QuickCheck.
+
+a) head_tailOpt: 'a list -> ('a option, 'a list option)
+
+
+Restituisce la coppia (None,None) se la lista e' vuota, 
+altrimenti la coppia composta dalla testa della lista e la coda della lista.
+
+Esempi:
+
+let h1 = head_tailOpt [ "uno" ; "due" ; "tre" ] ;;          
+// val h1 : string option * string list option  =   ( Some "uno", Some ["due"; "tre"] )
+
+let h2 = head_tailOpt ([] : int list) ;;
+// val h2 : int option * int list option = (null, null)
+
+Ricordarsi che non e' possibile applicare una funzione polimorfa a un argomento polimorfo,
+per questo e' necessario assegnare alla lista vuota un tipo non polimorfo.
+Notare che il valore  (None,None) di h2 e' stampato dall'interprete come (null, null).
+
+SOLUZIONE
+
+let head_tailOpt ls= 
+	match ls with
+	|[]->(None,None)
+	|x0::xs->(Some x0, Some xs);;
+
+In F# sono definite le analoghe funzioni
+
+  List.head : 'a list -> 'a
+  List.tail : 'a list -> 'a
+
+che sulla lista vuota sollevano una eccezione.
+
+QuickCheck
+^^^^^^^^^^
+
+Verifichiamo le seguente proprieta'  prop_ht_o di una lista ls.
+
+*  Se  il valore head_tailOpt ls e' definito e 
+
+      head_tailOpt ls = ( Some x , Some xs )
+
+   allora  ls = x :: xs .
+
+
+let prop_ht_o ls =
+  match ( head_tailOpt ls) with
+    Some x, Some xs -> ls = (x :: xs)
+    | _,None | None,_ -> true ;;
+
+
+Check.Quick prop_ht_o ;;
+
+
+
+//////////////////////////////////////////////////////////
+
+b) lastOpt : 'a list -> 'a option   // funzione ricorsiva
+
+Data una lista ls, last ls restituisce l'ultimo elemento di ls, se definito
+(ossia, se la lista non e' vuota).
+   
+Esempi:
+
+let l1 = lastOpt [ "uno" ; "due" ; "tre" ] ;;
+// val l1 : string option = Some "tre"
+
+let l2 = lastOpt ( [ ] : int list ) ;;
+// val l2 : int option = None
+   
+SOLUZIONE
+
+let rec lastOpt ls=
+	match ls with
+	|[]->None
+	|[x]->Some x
+	|x0::xs->lastOpt xs;;
+
+QuickCheck
+^^^^^^^^^^
+
+Verifichiamo la seguente proprieta' prop_last di una lista ls:
+
+* Se il valore lastOpt ls e' definito allora
+    
+      lastOpt ls  = head ( reverse ls ) 
+
+Per calcolare head e reverse usiamo funzioni predefinite List.head e List.rev 
+
+
+SOULZIONE:
+
+let prop_last ls =
+  match (lastOpt ls) with
+    Some x -> x = ( List.rev ls |> List.head )
+    | None -> true ;;
+
+Check.Quick prop_last  ;;
+
+////////////////////////////////////////////////////////////
+
+c) catOpt: 'a option list -> 'a list // funzione ricorsiva
+
+Restisuisce la lista degli elementi x tale che Some x e' nella lista,
+eliminando i  None.
+
+Esempi:
+ 
+let lc1 = catOpt ( [Some 1 ; None ; Some 2 ; Some 3 ; None] ) ;;                          
+// val lc1 : int list = [1; 2; 3]
+
+let lc2 = catOpt ( [ None ; Some "cane" ; None ; None ; Some "gatto" ; Some "topo"] ) ;;  
+// val lc2 : string list = ["cane"; "gatto"; "topo"]
+
+SOLUZIONE:
+
+let rec catOpt ls=
+	match ls with
+	|[]->[]
+	|x0::xs ->
+		match x0 with
+		| Some y -> y::catOpt xs
+		| None -> catOpt xs;;
+
+
+QuickCheck
+^^^^^^^^^^
+
+Verifico la seguente proprieta' prop_cat di una lista ls:
+
+*  length ls   >= length ( catOpt ls )
+
+Per calcolare la lunghezza di una lista, usiamo la funzione predefinita  List.length
+
+let prop_cat ls =
+  ( List.length ls ) >= (catOpt ls |> List.length)  
+
+Check.Quick prop_cat ;;
+
+
+////////////////////////////////////////////////
+
+d) mynth : ('a list * int) -> 'a option  // funzione ricorsiva
+
+Data una lista xs = [x0 ; x1 ; x2 ; ...]  e un intero n >= 0, 
+
+  mynth (xs, n)
+
+restituisce, se definito, l'elemento  xn (elemento di indice n).
+
+
+Esempi:
+
+let y1 = mynth (['a'..'z'], 0) ;;
+// val y1 : char option = Some 'a'
+
+let y2 = mynth (['a'..'z'], 2) ;;
+// val y2 : char option = Some 'c'
+
+let y3 = mynth (['a'..'z'], 30) ;;
+// val y3 : char option = None
+
+Confrontare con la funzione predefinita List.nth
+
+SOLUZIONE 
+
+let rec mynth (ls, n)=
+	match (ls,n) with
+	|([],_)->None
+	|(x0::xs,0)->Some x0
+	|(x0::xs,n)->mynth (xs,n-1);;
+
+PROP
+
+let prop_nth (ls : ‘a list , n : int)=
+	match (mynth (ls,n)) with
+	|Some x -> x = List.nth ls n
+	|None -> true;; 
+	
+
+QuickCheck
+^^^^^^^^^^
+
+i) Proprieta' prop_model della coppia  (ls : 'a list , n  : int):
+
+*   Se  il valore mynth(ls,n) e' definito allora
+    mynth(ls,n) da' lo stesso risultato che si ottiene usando List.nth
+
+
+let mynth_prop_model (ls,n) =
+  match mynth(ls,n) with
+    | None -> true
+    | Some m -> m = List.nth  ls n ;;
+
+Check.Quick mynth_prop_model ;;
+
+
+ii) Proprieta'  mynth_prop_mem della coppia  (ls : 'a list , n  : int):
+
+*   Se il valore  mynth(ls,n) e' definito allora
+    l'elemento mynth(ls,n) deve appartenere alla lista ls
+
+// x appartiene a ls
+let rec mem (x , ls) =  
+    match ls with 
+    | [] -> false 
+    | y::ys -> x=y || mem (x, ys)  ;;
+
+let mynth_prop_mem (ls,n) =
+  match mynth(ls,n) with
+    | None -> true
+    | Some m -> mem (m, ls) ;;
+
+Check.Quick mynth_prop_mem ;;
+
+
+Check.Quick mynth_prop_mem
+// se xn e' definito, l'elemento restituito appartiene a ls
+
+____________________________________________
+
+
+ESERCIZIO 3 
+===========
+
+Definiamo i seguenti tipi:
+
+type tagged = Int of int | Bool of bool;;
+
+type tList = tagged list;;  // type abbreviation
+
+Notare che il tipo tagged permette di rappresentare valori che possono essere int o bool,
+useremo spesso questo tipo di definizioni.
+
+Esempi di liste di tipo tList sono:
+
+let tl1  = [ Int 0 ] ;;
+let tl2  = [ Int 0 ; Int 1 ; Bool true ; Int 4 ; Bool false ] ;; 
+let tl3  = [ Int 3 ;  Bool (4>6) ; Int (44-66) ; Bool ( 10 = 5 + 5 )  ];;
+
+Definire la funzione ricorsiva
+
+    printTl : tList -> string
+
+che, data una lista tl : tList, restituisce una stringa che descrive il contenuto di tl
+(valore e tipo di ciascun elemento) come mostrato negli esempi sotto.
+
+Per evitare di duplicare codice, si consiglia di definire la funzione
+
+  printVal : tagged -> string
+
+che restituisce la stringa che descrive un valore di tipo tagged.
+
+Esempi:
+
+let s1 = printTl tl1 ;;
+// val s1 : string =  "0 : int"
+
+let s2 = printTl tl2 ;;
+// val s2 : string = "0 : int; 1 : int; true : bool; 4 : int; false : bool"
+
+let s3 = printTl tl3 ;;
+//  val s3 : string =  "3 : int; false : bool; -22 : int; true : bool"
+
+

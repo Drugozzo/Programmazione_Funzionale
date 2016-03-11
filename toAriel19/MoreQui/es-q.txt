@@ -1,0 +1,17 @@
+%%% Exercise on generators
+
+Sets can be seen as lists without repetitions. Validate the set
+version of the ordered/insert property, namely
+
+"if ss is an ordered set then inserting x in ss is still ordered"
+
+You need to define a generator such that it only emits ordered lists
+w/o repetitions. Then quantify over such list.
+
+Hint: use mapFilter with the remove function as seen before
+
+(Again: use lists, not Sets)
+
+Finally, redefine you generator so that lists are not only ordered and
+w/o repetitions, but  also have length between 3 and 7.
+   

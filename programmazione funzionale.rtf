@@ -1,0 +1,23 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1344\cocoasubrtf720
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
+
+\f0\fs24 \cf0 let x : int = 5;;	#definisco un intero e ci assegno il valore 5\
+x;;	#stampo la variabile\
+\
+let y : float = 5;;		#definisco una variabile di tipo float\
+\
+let square x = x * x;;		#creo una funzione che dato un intero mi restituisce il valore elevato alla 2\
+es:\
+	>square 10;;\
+	val it : int 100\
+\
+let square = fun x -> x *x;;		#\'e8 la stessa cosa\
+\
+\
+	\
+let rec mcd = function\
+	|(0,n)->n\
+	|(m,n)->mcd(n%m,m);;}

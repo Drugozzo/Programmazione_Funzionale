@@ -1,0 +1,241 @@
+(*
+
+Type checker per liste di interi 
+================================
+
+Si considerino i tipi intero e liste di interi
+
+t ::= INT | LSTINT
+
+ed un linguaggio di espressioni che contenga constanti intere, somme,
+la lista vuota, l'operazione di cons, le operazioni di testa e di coda
+di una lista:
+
+ e ::= k | e1 + e2 | nil | cons(e1,e2) | hd e | tl e  
+
+1. Dare dichiarazioni di tipo per 't' ed 'e'.
+
+SOLUZIONE
+*)
+
+type t =
+  |INT 
+  |LSTINT ;;
+
+type e =
+  |K of int
+  |NIL 
+  |SUM of e*e
+  |CONS of e*e
+  |HD of e
+  |TL of e;;
+
+(*)
+2. Scrivere un type checker, seguendo queste regole:
+  - una costante ha tipo intero (INT)
+  - una somma ha tipo intero se i due sommandi sono interi
+  - la lista vuota ha tipo LSTINT
+  - una cons(e1,e2) ha tipo LSTINT se e1 ha tipo INT e e2 ha tipo LSTINT
+  - (hd e) ha tipo INT se e ha tipo LSTINT
+  - (tl e) ha tipo LSTINT se e ha tipo LSTINT
+
+Se l'espressione sorgente non è tipabile (es. 3 + nil), allora si
+restituisca None, cioè il type checker ha tipo
+
+ tpck : exp -> tp option
+
+Esempi -- nota che la sintassi f <e> indica che f è applicata
+alla **rappresentazione** di e: 
+
+  tpck < cons(3+9,nil) > = Some(LSTINT)  
+  tpck < hd (cons(3 + 9, nil))> = Some(INT)
+  tpck <(3 + nil)> = None 
+
+SOLUZIONE
+*)
+
+let rec tpck e =
+  match e with
+  |K(_) -> Some INT
+  |NIL -> Some LSTINT
+  |SUM(e1,e2) -> 
+    let (t1,t2) = (tpck e1, tpck e2)
+    if t1 = Some INT && t2 = Some INT then Some INT
+    else None
+  |CONS(e1,e2) -> 
+    let (t1,t2) = (tpck e1, tpck e2)
+    if t1 = Some INT && t2 = Some LSTINT then Some LSTINT
+    else None
+  |HD(e) -> 
+    let t = tpck e
+    if t = Some LSTINT then Some INT
+    else None
+  |TL(e) ->
+    let t = tpck e
+    if t = Some LSTINT then Some LSTINT
+    else None;;
+
+
+//- Si testi il checker con il seguente codice:
+
+// per inizializzare la generazione random sotto VS2010
+(*
+let sample size n gn =
+  let _ = System.Runner.init.Force() |> ignore
+  let rec sample i seed samples =
+    if i = 0
+    then samples else sample (i-1) (Random.stdSplit seed |> snd) (Gen.eval size seed gn :: samples)
+  sample n (Random.newSeed()) []
+  *)
+// size è la massima dimensione di <e>, len la lunghezza della lista
+// di esempi generata
+
+let test size len =
+  let tms = (Gen.sample size len Arb.generate<e>)
+  List.map2 (fun x y -> printf "%A has type %A\n" x y) tms (List.map tpck tms);;
+
+(*
+-  [OPZIONALE] Riscrivere la funzione di test in modo 
+ i. se un termine non ha un tipo, non scrivo "<e> has type null", ma
+ "<e> is not typable"
+ii. se un termine ha tipo Some <tp>, elimino nella stampa il "Some"
+
+ (hint: si può usare List.partition con le primitive della collezione Option) 
+
+SOLUZIONE
+*)
+
+let test2 size len =
+  let tms = (Gen.sample size len Arb.generate<e>)
+  let f x y = 
+    match y with
+    |None -> printf "%A is not typable\n" x
+    |Some z -> printf "%A has type %A\n" x z
+  List.map2 f tms (List.map tpck tms);;
+
+(*)
+3. Riscrivere il type checker usando eccezioni. 
+
+ tpckf : exp -> tp
+
+Dove ci sarebbe un errore di tipo si sollevi una opportuna eccezione
+che si porti dietro quei valori necessari a dare un messaggio di
+errore significativo. Per esempio:
+
+exception TlERR of (e * t) 
+
+descrive l'errore ottenuto cercando di tipare una expressione tl <e>
+con <t> dove <t> non è LISTINT. Quindi bisogna dichiarare un certo
+numero di eccezioni con gli argomenti corretti.
+
+SOLUZIONE
+*)
+
+exception SumTypeError of ((e * e) * (t option * t option))
+exception ConsTypeError of ((e * e) * (t option * t option))
+exception HdTlTypeError of (e * t option)
+
+let rec tpckf e =
+  match e with
+  |K(_) -> Some INT
+  |NIL -> Some LSTINT
+  |SUM(e1,e2) -> 
+    let (t1,t2) = (tpckf e1, tpckf e2)
+    match (t1,t2) with
+    |(Some INT,Some INT) -> Some INT
+    | _ -> raise (SumTypeError ((e1,e2),(t1,t2)))
+  |CONS(e1,e2) -> 
+    let (t1,t2) = (tpckf e1, tpckf e2)
+    match (t1,t2) with
+    |(Some INT,Some LSTINT) -> Some LSTINT
+    |_ -> raise (ConsTypeError ((e1,e2),(t1,t2)))
+  |HD(e) -> 
+    let p = tpckf e
+    match p with
+    |Some LSTINT -> Some INT
+    |_ -> raise (HdTlTypeError (e,p))
+  |TL(e) ->
+    let p = tpckf e
+    match p with
+    |Some LSTINT -> Some LSTINT
+    |_ -> raise (HdTlTypeError (e,p));;
+
+
+(*
+4. Scrivere una funzione
+
+main : exp -> unit
+
+che esegue tpckf e se questa ha successo stampa per esempio
+
+main <cons (5, tl nil)> 
+
+==> < cons (5, tl nil)> has type LSTINT
+
+se invece fallisce, da un messagio informativo, per esempio
+
+main < cons (tl nil, 5))> 
+
+==>
+Expected types tl nil : INT,  5 : LSTINT. Inferred types: (tl nil,
+LSTINT) and ( 5, INT)
+
+Si testi qyesto type checker con una version della funzione "test"
+sopra (senza printf)
+
+
+SOLUZIONE
+*)
+
+let rec main e =
+  try
+    match (tpckf e) with
+    |Some exp -> printf "<%A> has type %A\n" e exp
+  with
+    |SumTypeError ((a1,a2),(b1,b2)) -> printf "Expected types %A : INT, %A : INT. Inferred types : (%A, %A) and (%A, %A)\n" a1 a2 a1 b1 a2 b2
+    |ConsTypeError ((a1,a2),(b1,b2)) ->printf "Expected types %A : INT, %A : LSTINT. Inferred types : (%A, %A) and (%A, %A)\n" a1 a2 a1 b1 a2 b2
+    |HdTlTypeError (a,b) -> printf "Expected type %A : LSTINT. Inferred types :  (%A, %A)\n" a a b ;;
+
+let l1 = List.head ( Gen.sample 200 1 Arb.generate<e>);;
+
+(*
+5. Un'espressione v in forma normale (o valore) sse
+ v e'  una costante intera o nil o una cons di espressioni normali.
+
+v ::= k | nil | cons(v1,v2)
+
+scrivere una funzione value : exp -> bool che riconosca quali
+espressione sono valori
+*)
+
+6.  Scrivere un interprete di tipo
+
+  eval : exp -> exp
+
+che, data un'espressione, restituisce per esempio
+   
+      eval <(3+9)> = 12 
+      eval <( cons(3 + 9, nil) )> = <cons(12,nil)> 
+      eval <( hd (cons(3 + 9, nil)) )> = <12>
+      eval <( tl (cons(3 + 9, (cons( 2 + 2), nil))) )> = <cons(4,nil)>
+
+7. L'interprete precedente non gestisce run-time errors come <hd nil>,
+che nel caso di eval solleva una eccezione di patter matching
+incompleto. Scrivere un interprete **difensivo**
+
+  evalo : exp -> exp option
+
+che restituisce None in caso si prenda testa/coda di lista vuota.
+
+Si validi la cosidetta proprietà di "value soundness", per la quale se
+valuto una espressione e non sollevo una eccezione, allora
+il risultato è un valore con il seguente QuickCheck:
+
+let prop_vs e =
+  let genwt = Arb.filter (fun x -> tpck x <> None) Arb.from<tm>
+  Prop.forAll genwt (fun e ->
+                     match (evalo  e) with
+                     |None -> true
+                     | Some v -> value v)
+
+do Check.Quick prop_vs

@@ -1,0 +1,313 @@
+ESERCIZIO 1	
+===========
+
+Consideriamo le definizioni
+
+let f = fun x -> x + 1 ;;
+let g = fun x -> x  +1 ;;
+
+Le funzioni f e g sono uguali?
+Cosa calcola g?
+
+Dare qualche esempio di termine t tale per cui l'applicazione
+
+  g t
+
+ha senso.
+
+________________________________________________________________________________
+
+
+ESERCIZIO 2	
+===========
+
+2.1) Definire la funzione ricorsiva map tale che, 
+data una funzione f e una lista ls aventi tipo
+
+  f : 'a -> 'b      ls : 'a list
+
+il valore di
+ 
+   map f ls
+
+e' la lista di tipo 'b list ottenuta applicando a ogni elemento x di ls la funzione f.
+
+Quindi:
+
+ map  f [ x0 ; x1 ; .... ; xn ]   =   [ f x0 ; f x1 ; ... ; f xn ]
+
+Il tipo di map e':
+
+   map : ('a -> 'b) -> 'a list -> 'b list
+
+Notare che map e' una funzione higher-order.
+
+SOLUZIONE:
+
+let rec map f ls = 
+  match ls with
+  |[]->[]
+  |x0::xs-> f x0::map f xs;;
+
+2.2) Sia l1 la lista contenente i numeri da 1 a 10.
+
+Applicando map a una opportuna funzione f e alla lista l1 costruire le seguenti liste
+(scrivere f come funzione anonima):
+
+l2 =  [1; 4; 9; 16; 25; 36; 49; 64; 81; 100] // quadrati dei primi 10 numeri
+
+l3 = [(1, "dispari"); (2, "pari"); (3, "dispari"); (4, "pari"); (5, "dispari"); (6, "pari"); 
+      (7, "dispari"); (8, "pari"); (9, "dispari"); (10, "pari")]
+
+SOLUZIONE 
+
+let f2 x = x*x;;
+
+let f3 x = 
+  match x%2 with
+  |0->(x,"pari")
+  |_->(x,"dispari");;
+
+2.3) Consideriamo la lista
+
+let names = [ ("Mario", "Rossi") ; ("Anna Maria", "Verdi") ; ("Giuseppe", "Di Gennaro")] ;;
+
+Applicando map a una opportuna funzione e alla lista names, costruire la lista
+ 
+names1 =  ["Dott. Mario Rossi"; "Dott. Anna Maria Verdi"; "Dott. Giuseppe Di Gennaro"]
+
+SOLUZIONE 
+
+let nam (n,c) = "Dott. "+n+" "+c;; 
+
+QuickCheck
+^^^^^^^^^^
+
+Definire e  verificare con QuickCheck le seguenti  proprieta' di map:
+
+
+i)    prop_map (ls : int list)
+
+map e List.map calcolano gli stessi valori
+(piu' precisamente, le applicazioni 'map f ls' e 'List.map f ls' producono la stessa lista).
+
+SOLUZIONE
+
+let prop_map (ls : int list) = 
+	let f = fun x -> x*x
+	map f ls = List.map f ls;;
+
+ii)   prop_map_pres_len f (ls :int list)
+
+La lista  'map f ls' ha la stessa lunghezza di ls
+(per calcolare la lunghezza di una lista usare List.length)
+
+SOLUZIONE
+
+let prop_map_pres_len f (ls : int list)=
+	List.length (map f ls) = List.length ls;;
+
+Per usare QuickCheck:
+
+#r "FsCheck" ;;
+open FsCheck ;;
+
+let prop_to_check  =  ...  
+do Check.Quick prop_to_check   ;;
+
+_____________________________________________________________________________________________
+
+
+ESERCIZIO 3	
+===========
+
+3.1) Definire la funzione ricorsiva filter tale che, 
+ data una funzione pred (predicato)  e una lista ls  aventi tipo
+
+  pred : 'a -> bool     ls :  'a list
+
+il  valore di
+
+   filter pred ls
+   
+e' la lista di tipo 'a list contenente gli elementi di ls che verificano pred.
+La lista risultante contiene quindi gli elementi x di ls tali che pred x e' true  (pred funge da filtro).
+
+Il tipo di filter e':
+
+ filter: ('a -> bool) -> 'a list -> 'a list
+
+ed e'  una funzione higher-order
+
+SOLUZIONE
+
+let rec filter pred ls= 
+  match ls with 
+  |[]->[]
+  |x0::xs->
+    if pred x0 then x0::filter pred xs
+    else filter pred xs;;
+
+3.2) Usando fiter, definire la funzione
+
+   mult3 : int  -> int list
+
+che costruisce la lista dei multipli di 3 compresi fra 1 e n
+(applicare in modo opportuno filter sulla lista [1 .. n]).
+
+let mult3 n = 
+  let ls = [1..n]
+  let m3 x = if x%3=0 then true else false
+  let fl =filter m3 ls
+  fl;;
+
+QuickCheck
+^^^^^^^^^^
+Definire e  verificare con QuickCheck le seguenti  proprieta' di filter:
+
+i) prop_filter pred (ls : int list) 
+
+filter e List.filter calcolano gli stessi valori.
+
+SOLUZIONE
+
+let prop_filter pred (ls : int list)=
+	filter pred ls = List.filter pred ls;;
+
+ii)  prop_filter_len pred (ls :int list)
+
+La lista   'filter pred ls' non puo' essere piu' lunga della lista ls.
+
+SOLUZIONE
+
+let prop_filter_len pred (ls : int list)=
+	List.length (filter pred ls) <= List.length ls;;
+
+________________________________________________________________________
+
+
+ESERCIZIO 4	
+===========
+
+4.1) Definire la funzione ricorsiva filter1 analoga a filter in cui pero'
+
+   filter1 pred ls = ( lsTrue, lsFalse )
+
+dove:
+
+- lsTrue    contiene gli elementi di ls che verificano pred
+- lsFalse   contiene gli elementi di ls che non verificano pred
+
+Il tipo di filter1 e':
+
+   ('a -> bool) -> 'a list -> 'a list * 'a list
+
+SOLUZIONE
+
+let rec filter1 pred ls =
+  match ls with
+  |[]->([],[])
+  |x0::xs-> 
+    let (t,f) = filter1 pred xs
+    if pred x0 then (x0::t,f)
+    else (t,x0::f);; 
+
+4.2) Usando filter1 e le definizioni nell'esercizio precedente, costruire le coppie di liste
+
+p1 =  ( [3; 6; 9; 12; 15; 18] , [1; 2; 4; 5; 7; 8; 10; 11; 13; 14; 16; 17; 19; 20] )
+ //  ( multipli di 3 , non-multipli di 3 ) 
+
+SOLUZIONE
+
+let mult3 n = 
+  let ls = [1..n]
+  let m3 x = if x%3=0 then true else false
+  let fl =filter1 m3 ls
+  fl;;
+
+
+4.3) Usando filter1, definire la funzione
+  
+   multNonmult : int -> int list * int list
+
+che, dato un intero n, partiziona la lista [1 .. n] 
+nella coppia di liste  
+
+    ( multipli di 3 , non-multipli di 3 ) 
+
+Ad esempio:
+
+   multNonmult 16 =   ( [3; 6; 9; 12; 15] , [1; 2; 4; 5; 7; 8; 10; 11; 13; 14; 16] )
+
+SOLUZIONE
+
+let multNonmult n = 
+  let ls = [1..n]
+  let m3 x = if x%3=0 then true else false
+  let fl =filter1 m3 ls
+  fl;;
+
+QuickCheck
+^^^^^^^^^^
+
+Definire e  verificare con QuickCheck le seguenti  proprieta' di filter1:
+
+i) prop_filter1_len pred (ls : int list)
+
+Sia  (xs,ys) il risultato di 'filter1 pred ls'.
+Allora la lista 'xs @ ys' ha la stessa lunghezza di ls.
+
+SOLUZIONE
+
+let prop_filter1_len pred (ls : int list)=
+	let (xs,ys)=filter1 pred ls
+	List.length ls = List.length (xs@ys);;
+
+ii) t prop_filter1_app pred (ls :int list)
+
+Sia  (xs,ys) il risultato di 'filter1 pred ls'.
+Allora, ordinando le liste ls e  'xs @ ys', si ottiene la stessa lista
+(per ordinare le liste usare List.sort).
+
+SOLUZIONE
+
+let prop_filter1_app pred (ls : int list)=
+	let (xs,ys)=filter1 pred ls
+	List.sort ls = List.sort (xs@ys);;
+
+________________________________________________________________________________________
+
+
+ESERCIZIO 5	
+===========
+
+Definire la funzione 
+
+     divisori : int -> int list
+
+che, dato un intero n > 0, restituisce la lista dei suoi divisori.
+
+Esempio:
+
+ let d100 =  divisori 100 ;;
+// val d100 : int list = [1; 2; 4; 5; 10; 20; 25; 50; 100]
+
+SOLUZIONE
+
+let divisori n =
+	let d=n
+	let rec div d=
+		match d with
+		|1->[1]
+		|d-> if n%d=0 then d::div (d-1) else div(d-1)
+	let ris = div d
+	List.sort ris;;
+
+
+Usando la funzione divisori, definire la funzione isPrime che determina se un intero  e' primo.
+Notare che e' sufficiente scrivere una espressione booleana.
+
+SOLUZIONE
+
+let isPrime n = List.length (divisori n) <=2;;
+	

@@ -1,0 +1,47 @@
+ADT in F#
+
+* In F# this can be achieved via the use of signatures and modules
+
+	- sig files (sig.fsi) specify the interface/API
+	- module declarations (standard impl.fs files) represent the implementors side
+	
+	- They are "matched" by the compiler, which compiles a library
+          file (impl.dll)
+
+* HOWTO:
+
+     - via the compiler:
+       
+       1. open a terminal (cmd, or better use git bash) and go to the
+       directory containing your files
+
+       2. For our working example: run 
+       	      fsc -a set.fsi listFS.fs
+
+       3. This will produce a library file listFS.dll. To use it you
+       can run F# interactive from the shell like that
+              fsi -r listFS.dll s.fsx
+
+       now you can open the module and use it in your script file
+       s.fsx
+
+
+     - via Visual Studio
+
+     1. "Open" a new project and choose F# library. Choose the name and
+     location of the to be generated dll
+
+     2. Go to Solution Explorer, remove for hygiene reasons the *fs
+     and *fsx that VS generates for you. "Add existing files" (right
+     click) namely the *fsi and *fs. Move the *fsi to be
+     first. "Build" the project
+
+     3. To use the dll, you need to reference it like this in your
+     *.fsx file
+
+     	   #r @"directory\name.dll"
+
+     Note that the dll will be under bin\debug in the folder that VS
+     builds for you.
+
+ 

@@ -1,0 +1,76 @@
+(*
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+1. Aggiungere all'interfaccia set.fsi le seguenti funzionni
+
+count : FSet<'a> -> int, che computa la cardinalità dell'insieme
+
+map : ('a -> 'b) -> FSet<'a> -> FSet<'b>, 
+       dove map f s = {f(x) | x in s}
+
+(tenendo presente di preservare l'invariante che il risultato sia un insieme, 
+cioè non abbia ripetizioni)
+
+--> Implementare le dette funzioni sia come liste che come alberi.
+
+--> Estendere i quickcheck dati a coprire le nuove funzionalità
+
+SOLUZIONE
+*)
+
+let rec count t =
+	match t with
+	|Leaf -> 0
+	|Node(r,left,right) -> 1 + count left + count right;;
+
+let rec map f s = 
+	match s with
+	|Leaf -> Leaf
+	|Node(r,left,right) -> 
+		let sx = map f left
+		let dx = mao f right
+		let tr = union sx dx
+		let new = f r
+		if (not(contains new tr)) then add new tr;;
+
+let prop_m (f : 'a -> 'b, s : 'a FSet) =
+	let ls = toList s
+	(List.map f ls |> List.sort ) = (map f s |> toList |> List.sort);;
+
+(*
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+2.  Usando una delle implementazioni di cui sopra, dare una codifica
+dell'esercizio 5.6:
+
+We see a relation from a set A to a set B as a subset of A * B. 
+A relation r is called finite if it is a finite subset
+of A * B. Assuming that the sets A and B are represented by F# types
+’a and ’b we can represent a finite relation r by a value of type
+FSet<’a * ’b>.
+
+You can use the following type abbreviation:
+
+type Rel<'a,'b when 'a : equality and 'b : equality> = FSet<'a * 'b>;;
+
+i. Give as a **concrete** example the "less" relation over the set
+{1,2,3}. Do not write the function, just list the elements as a set.
+
+{(1,2),(1,3),(2,3)}
+
+ii. The domain dom r of a relation r is the set of elements a in A
+where there exists an element b in B such that (a, b) ∈ r. Write an F#
+declaration expressing the domain function.  
+
+The range rng r of a relation r is the set of elements b in B where
+there exists an element a in A such that (a, b) ∈ r. Write an F#
+declaration expressing the range function.
+
+iii. The identity relation on a set S is the relation associating every s ∈ S 
+to itself.  Write an F# declaration computing the identity relation from a given S.  
+
+iv. A relation r from a set A to the same set is said to be symmetric
+if (a1 , a2 ) ∈ r implies (a2 , a1 ) ∈ r for any elements a1 and a2 in
+A. The symmetric closure of a relation r is the smallest symmetric
+relation containing r. Declare an F# function to compute the symmetric
+closure.
+*)

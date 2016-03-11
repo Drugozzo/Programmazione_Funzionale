@@ -1,0 +1,530 @@
+     
+(*     
+CRIVELLO DI ERATOSTENE
+======================
+
+Scopo dell'esercizio e'  definire la sequenza infinita dei numeri primi
+implementando la procedura nota come "crivello di Eratostene".
+Tale procedura  lavora su insiemi infiniti;  nelle implementazioni in genere 
+si fissa un limite superiore sui numeri da considerare.
+Con le sequenze si puo' lavorare direttamente sugli  insiemi infiniti.
+
+
+i) Definire la funzione 
+
+    sift : int -> seq<int> -> seq<int>
+  
+che, dati un intero a > 0 e  una sequenza infinita di interi sq,
+restituisce la sequenza di interi  ottenuta eliminando da sq i multipli di a.
+
+Ad esempio
+
+let nat = sequenza infinita dei numeri naturali 0, 1, 2, 3, ...
+let sq1 = sift 2 nat
+let sq2 = sift 3 nat
+
+Verificare che:
+
+- La lista dei primi 10 elementi di sq1 e'
+
+    [1; 3; 5; 7; 9; 11; 13; 15; 17; 19]
+
+- La lista dei primi 15 elementi di sq2 e'
+
+    [1; 2; 4; 5; 7; 8; 10; 11; 13; 14; 16; 17; 19; 20; 22]
+
+SOLUZIONE
+*)
+
+let nat2 = Seq.initInfinite (fun x -> x+2);;
+
+let rec sift a sq=
+  seq{
+    let e0 = Seq.nth 0 sq
+    if e0%a<>0 then yield  e0
+    yield! sift a (Seq.skip 1 sq)
+  };;
+
+(*
+ii) Definire la funzione ricorsiva
+
+    sieve : seq<int> -> seq<int>
+
+che applica a una sequenza infinita di interi  il crivello di Eratostene.
+Piu' precisamente, data una sequenza sq di interi, va eseguito il seguente processo infinito:
+
+------------------------------------------------------------------------------------
+1. x0  :=  primo elemento di sq 
+2. Cancella da sq i multipli propri di x0
+   (ossia, x0 rimane in sq e sono cancellati da sq i multipli di x0 maggiori di x0) 
+3. Ripeti il processo da 1  
+------------------------------------------------------------------------------------
+
+Al passo 2 usare la funzione sift.
+
+SOLUZIONE
+*)
+
+let rec sieve sq =
+  seq{
+    let e0 = Seq.nth 0 sq
+    if e0=0 || e0=1 then
+      yield! sieve (Seq.skip 1 sq)
+    else
+      yield e0
+      let sq = sift e0 sq
+      yield! sieve sq  
+  };;
+
+  let rec sieve sq =
+    seq{
+      let e0 = Seq.nth 0 sq
+      yield e0
+      let sq = sift e0 sq
+      yield! sieve sq
+    };;
+(*
+iii) Sia nat2 la sequenza infinita degli interi n >= 2.
+La sequenza infinita primes dei numeri primi puo' essere costruita applicando sieve a nat2.
+
+Verificare che la lista dei primi 10 numeri primi e'
+ 
+ [2; 3; 5; 7; 11; 13; 17; 19; 23; 29]
+
+SOLUZIONE
+(*
+
+sieve nat |> Seq.take 10 |> Seq.toList;;
+
+*)
+
+iv) L'implementazione fornita del Crivello di Eratostene e' poco efficiente,
+in quanto le sequenza usate vengono continuamente rigenerate.
+
+Per migliorare l'efficienza si puo' usare il meccanismo di caching, 
+che evita di calcolare piu' volte lo stesso elemento di una sequenza.
+
+Si puo' procedere come segue:
+
+a) Si definisce la versione cached della funzione sift
+*)
+
+let siftC a sq = Seq.cache  ( sift a sq );;
+
+(*
+b) Si definisce la funzione sieveC, analoga a sieve, in cui pero' vengono usate le funzioni siftC e sieveC.
+*)
+
+let rec sieveC sq =
+  seq{
+    let e0 = Seq.nth 0 sq
+    yield e0
+    let sq = siftC e0 sq
+    yield! sieveC sq  
+  };;
+
+(*
+c) Si definisce la sequenza cached dei numeri primi usando sieveC:
+*)
+
+let primesC = Seq.cache (sieveC nat2);;
+
+(*
+Verificare che l'implementazione con caching e' piu' efficiente
+(provare a generare una lista di numeri primi grande usando le due versioni).
+
+Notare inoltre che eseguendo piu' volte la ricerca di un numero primo, ad esempio
+
+Seq.nth 1000 E.primesC ;;
+//val it : int = 7927
+Seq.nth 1000 E.primesC ;;
+//val it : int = 7927
+
+la seconda richiesta ha una risposta immediata (il risultato e' stato memorizzato dopo la prima computazione).
+
+
+_________________________________________________________________________________________________________________________
+
+
+ELENCO DEI FILE IN UNA DIRECTORY
+=================================
+
+Definite la funzione
+
+  allFiles : string -> seq<string>
+
+che dato il path di una directory (una stringa) costruisce la sequenza
+dei file contenuti nella directory specificata e, ricorsivamente, 
+in tutte le sue sottodirectory.
+
+Usare le seguenti funzioni di F#:
+
+* Directory.GetFiles  : string -> string [] 
+ 
+  Restituisce un array con i nomi dei file nella directory specificata.
+  
+* Directory.GetDirectories : string -> string [] 
+ 
+  Restituisce un array con i nomi delle directory nella directory specificata.
+ 
+Per usare queste funzioni occorre aprire System.IO:
+
+  open System.IO ;;
+
+Notare che gli array possono essere visti come sequenze,
+quindi e' possible applicare ad essi le funzioni definite sulle sequenze.
+
+Occorre inoltre usare la funzione Seq.collect.
+
+
+Esempio:
+
+let myDir = "/home/fiorenti/tmp"  // definizione di un path 
+let fileSeq = allFiles myDir
+
+Seq.nth 10 fileSeq ;;  // file in posizione 10 in fileSeq
+// val it : string = "/home/fiorenti/tmp/prova/xx.txt"
+
+SOLUZIONE
+*)
+
+let rec allFiles dir=
+  let rec directory dir=
+
+  seq{
+    let 
+  }
+
+let ff (x:int) = float x;;
+
+let rec ff ls =
+  match ls with
+  |[] -> []
+  |x0::xs -> 
+
+let allFiles dir =
+  let sq = Directory.GetDirectories dir
+  let sq = Seq.skip 0 sq
+  let rec file (sq : seq<string>) =
+    seq{
+      if not(Seq.isEmpty sq) then 
+        let f = (Directory.GetDirectories (Seq.nth 0 sq ))
+        let d = Seq.skip 1 sq
+        yield f
+        yield! file d
+    }
+  file sq;;
+
+let allFiles dir =
+  let sq = Directory.GetDirectories dir
+  let sq = Seq.skip 0 sq  
+  let rec file (sq : seq<string>) =
+    match (Seq.isEmpty sq) with
+    |true-> seq []
+    |false->
+      let f = (Directory.GetDirectories (Seq.nth 0 sq ))
+      let d = Seq.skip 1 sq
+      Seq.append f (Seq.map file (Seq.skip 1 sq))
+  file sq;;
+
+Calcolare il numero dei file nella sequenza ottenuta.
+________________________________________________________________________________
+
+
+APPROSIMAZIONE FUNZIONE ESPONENZIALE MEDIANTE SERIE DI TAYLOR
+============================================================
+(** Esercizio difficile, vedi es. 11.7 del libro  **)
+
+
+La funzione esponenziale puo' essere approssimata usando la serie di Taylor: 
+
+ e^x  =   1/0!  +   x^1 / 0!  +  x^2 / 2! + ... +  x^k/ k! + .....       (ST)
+
+Chiamiamo t(x,k) il termine  della serie di posto k 
+
+Vogliamo definire una funzione che calcola e^x con una data approsimazione
+usando (ST).
+
+i)   Definire la funzione 
+
+    f : float -> int -> float
+       
+che,  dati x:float e k:int,  calcola  il termine t(x,k)  di (ST).
+
+Suggerimento
+^^^^^^^^^^^
+
+Definire f per induzione su k, osservando come t(x,k) e' ottenuto da t(x,k-1).
+
+SOLUZIONE
+*)
+
+let rec fact n =
+  match n with
+  |0|1 -> 1
+  |n -> n*fact (n-1);;
+
+let rec pow (x : float) n=
+  match n with
+  |1 -> x
+  |n -> x * pow x (n-1);;
+
+let f (x : float) (k : int)=
+  match k with
+  |0 -> float 1
+  |k -> ((pow x k) / float (fact k))
+
+(*
+ii) Usando le funzioni f e la funzione  sumSeq definita in un esercizio precedente 
+(sequenza delle somme di una sequenza)  definire la funzione 
+
+    apprTaylor : x -> seq<float>
+
+che, dato x:float, costruisce la sequenza infinita
+
+  t(x,0) ; t(x,0) + t(x,1) ;  t(x,0) + t(x,1) + t(x,2) ; ....     
+
+ossia la sequenza infinita delle approsimazioni di e^x data da (ST).
+
+Ad esempio, i primi 10 elementi della sequenza
+
+  apprTaylor 1.0 
+
+sono
+
+1.0; 2.0; 2.5; 2.666666667; 2.708333333; 2.716666667; 2.718055556; 2.718253968; 2.71827877; 2.718281526
+
+Notare che tali valori corrispondono ad  approssimazioni sempre piu' precise della costante e.
+
+SOLUZIONE
+*)
+
+let rec SumSeqF (sq : seq<float>)=
+  seq{
+    let e0 = Seq.nth 0 sq
+    yield e0
+    let e1 = Seq.nth 1 sq
+    let sq = Seq.append (seq[e0+e1]) (Seq.skip 2 sq)
+    yield! SumSeqF sq
+  };;
+
+let apprTaylor (x : float)=
+  let k = 0
+  let sq = Seq.map (f x) (Seq.initInfinite (fun z -> z))
+  let sq = SumSeqF sq
+  sq;;
+  
+(*
+iii) Usando la sequenza generata da apprTaylor, definire la funzione
+
+apprExp : float -> float -> float
+
+che, dato x:float e delta:float, calcola e^x con approsimazione delta.
+
+
+Esempi:
+
+apprExp 1.0 0.01 ;; 
+// val it : float = 2.708333333
+
+apprExp 1.0 0.0001 ;;
+// val it : float = 2.718253968
+
+apprExp 1.0 0.0000001 ;;
+// val it : float = 2.718281801
+
+apprExp 2.5 0.0000001 ;;
+// val it : float = 12.18249394
+
+SOLUZIONE
+*)
+
+
+
+
+(*
+____________________________________________________________________________________________
+
+
+VALUTAZIONE  LAZY DI AND
+========================
+(** Esercizio difficile **)
+
+
+L'obiettivo e' definire una funzione myAnd che valuti la AND di due espressioni booleane in modo lazy.
+
+Il problema principale e' che, indipendentemente da come  si e'  definito myAnd, la chiamata
+
+   myAnd ( 10 < 0 ) ( 2/0 > 0 )
+
+solleva una eccezione in quanto gli argomenti di myAnd sono valutati subito.
+
+Per risolvere il problema,  occorre "nascondere"  una espressione booleana exprBool 
+in una funzione costante  della forma
+
+   fun x -> exprBool  
+  // funzione costante di tipo 'a -> bool che ha valore exprBool
+
+Chiamiamo tale funzione la *rappresentazione lazy*  di exprBool.
+
+Esempi di rappresentazioni lazy:
+
+    fun x -> 10 < 0    // rappresentazione lazy di  10 < 0   
+    fun x -> 2/0 > 0   // rappresentazione lazy di  2/0 > 0
+
+Una  chiamata della forma
+  
+   myAnd  (fun x -> 10 < 0)  (fun x -> 2/0 > 0)
+
+non da' errore in quanto la valutazione della funzione
+
+   fun x -> 2/0 > 0
+        
+da' come risultato la funzione stessa (closure).
+
+Per valutare l'espressione  exprBool racchiusa in una rappresentazione lazy f occorre applicare f a un qualunque argomento.
+Ad esempio
+
+let f1 =  fun x -> 10 < 0 ;;  // rappresentazione lazy di 10 < 0
+// val f1 : 'a -> bool
+let f2 = fun x -> 2/0 > 0 ;;  // rappresentazione lazy di 2/0 > 0
+// val f2 : 'a -> bool
+
+f1 0 ;;  // valutazione di 10 < 0
+// f1 0   |-->   10 < 0  |-->   false   
+// |--> : passo di riduzione che avviene durante la valutazione
+// val it : bool = false
+
+f2 0 ;; // valutazione di   2/0 > 0 
+// f2 0   |-->    2/0 > 0 
+System.DivideByZeroException: Division by zero .....
+
+Negli esempi visti le rappresentazioni lazy hanno il tipo polimorfo
+
+   'a -> bool
+
+In genere si usa come dominio il tipo unit, che ha  come unico valore ().
+Quindi una rappresentazione lazy di una espressione booleana ha tipo
+
+     unit -> bool  
+
+Per comodita' definiamo il tipo
+*)
+
+type lazyBool = unit -> bool   // tipo delle rappresentazioni 
+
+(*
+lazy di espressioni bool
+
+Nelle funzioni da definire occorre  scrivere esplicitamente alcune annotazioni di tipo
+
+i)  Definire le costanti 
+
+let lazyTrue  =  ...    : lazyBool  ;;  // rappresentazione lazy di true
+let lazyFalse =  ...    : lazyBool  ;;  // rappresentazione lazy di false
+
+SOLUZIONE
+*)
+
+let lazyTrue = (fun x -> true) : lazyBool;;
+let lazyFalse = (fun x -> false) : lazyBool;;
+
+(*
+ii) Definire la funzione
+
+     myAnd : lazyBool -> lazyBool -> lazyBool
+
+che calcola la AND di due espressioni booleane avendo come argomenti le loro rappresentazioni lazy.
+Piu' precisamente, supponiamo che
+ 
+  f1 : lazyBool  rappresenti l'espressione  exprB1 : bool  
+  f2 : lazyBool  rappresenti l'espressione  exprB2 : bool  
+
+Allora
+
+   g =  myAnd f1 f2   
+
+e' la rappresentazione lazy di   ( exprB1 AND exprB2 ).
+
+SOLUZIONE
+*)
+
+let myAnd (f1 : lazyBool) (f2 : lazyBool) = 
+  match (f1 (),f2 ()) with
+  |(true,true)-> ((fun x -> true) : lazyBool)
+  |_ -> ((fun x -> false) : lazyBool);;
+
+let myAnd (f1 : lazyBool) (f2 : lazyBool) = 
+  match (f1 () && f2 ()) with
+  |true -> (fun x -> true) : lazyBool
+  |false -> (fun x -> false) : lazyBool;;
+
+//let myAnd (f1 : lazyBool) (f2 : lazyBool) = ((fun x -> f1() && f2()) : lazyBool);;
+
+(*
+iii) Definire le seguenti rappresentazioni lazy:
+
+g1 = rappresentazione lazy di   5 > 0
+g2 = rappresentazione lazy di   10 < 0
+g3 = rappresentazione lazy di   2/0 > 0
+
+Verificare che le seguenti valutazioni diano il risultato corretto.
+
+let v1 =  myAnd g1 g1 ;;  // (5 > 0) && (5 > 0)
+v1 () ;; // true
+let v2 = myAnd g1 g2 ;;  // (5 > 0) && (10 < 0)
+v2 () ;;  // false
+let v3 =  myAnd g2 g3 ;;  // (10 < 0) &&  (2/0 > 0)
+v3 () ;; // false
+let v4 = myAnd  g1 ( myAnd g2 g3 );;  // (5 > 0) && ( (10 < 0) &&  (2/0 > 0))
+v4 () ;; // false
+let v5 =  myAnd lazyTrue ( myAnd lazyFalse g3 );;  // true  && ( false &&  (2/0 > 0))
+v5 () ;; // false
+let v6 =  myAnd lazyTrue g3 ;;  // true && (2/0 > 0)
+
+Notare che v6 e' definito, ma v6() solleva una eccezione. Invece
+
+   myAnd  g3  lazyTrue
+
+solleva subito un'eccezione.
+
+SOLUZIONE
+*)
+
+let g1 = (fun x -> 5>0) : lazyBool;;
+let g2 = (fun x -> 10<0) : lazyBool;;
+let g3 = (fun x -> 2/0>0) : lazyBool;;
+
+(*
+iv) Per la rappresentazione lazy di una espressione si puo' usare la funzione predefinita lazy,
+che produce un valore di tipo Lazy<'a> che si comporta come  le funzioni costanti definite sopra.
+
+Ad esempio
+
+let e1 = lazy ( 10 > 0 ) ;;
+ 
+e1 ha tipo Lazy<bool> e  rappresenta l'espressione 10 > 0.
+
+Per accesere al contenuto di un termine e di tipo lazy  si usa Force:
+
+-  e.Force         e' una  funzione di tipo unit -> bool
+-  applicando alla funzione  e.Force il valore (), si valuta l'espressione in  e 
+
+Esempi:
+
+e1.Force ;;
+// val it :  unit -> bool
+
+e1.Force();;
+// val it : bool = true
+ 
+
+Provare a risolvere l'esercizio usando lazy e Force.
+*)
+
+let g1 = lazy(5>0);;
+let g2 = lazy(10<0);;
+let g3 = lazy(2/0>0);;
+
+let myAnd (f1 : Lazy<bool>) (f2 : Lazy<bool>) = f1.Force() && f2.Force();;
+

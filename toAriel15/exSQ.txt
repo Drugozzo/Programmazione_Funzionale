@@ -1,0 +1,78 @@
+ESERCIZI
+
+0. Any implementation of the Stack ADT must satisfy a certain amount of
+axioms such as:
+
+       top (push x st) = st
+       pop (push x st) = (x,st)
+       push x st <> empty
+       size empty = 0
+       size (push x st) = 1 + size st
+       size (pop st) = ???
+
+and other that you could invent about push_list etc.
+
+QuickCheck those properties -- for technical reasons it may be easier
+to do that directly in stack.fs, but put that testing code inside
+#if INTERACTIVE # and #endif  
+
+SOLUZIONE
+
+let StackGenerator = Arb.generate<Stack <'a>>
+
+let prop_top (x : 'a, st : 'a Stack) =
+	let ls = x :: (toList st)
+	top (push x st) = (List.head ls);;
+
+-----------------------------------------------------------------------------
+
+1. Extend the signature of Queue with the following operations
+
+- isEmpty qs, which checks if qs is empty
+- size qs,  computing the length of qs
+- ofList xs, which builds a queue starting from a given list
+- toList qs, which turns a queue into the corresponding list
+- put_list xs qs, which adds the elements of a list xs to a queue qs,
+  returning the resulting queue
+
+SOLUZIONE 
+
+let isEmpty q = (q=empty)
+
+let rec size qs =
+	match qs with
+	|{front = [] ; rear = []} -> 0
+	|{front = [] ; rear = rs} -> 
+		size (norm {front = [] ; rear = rs})
+	|{front = x::fs ; rear = rs} ->
+		1 + size {front = fs ; rear = rs }
+
+let rec ofList ls =
+	match ls with
+	|[] -> empty
+	|x0::xs -> 
+		let qs = ofList xs
+		put x0 qs;;
+
+let rec toList qs =
+	match qs with
+	|{front = [] ; rear = []} -> []
+	|{front = [] ; rear = rs} -> 
+		toList(norm {front = [] ; rear = rs})
+	|{front = x::fs ; rear = rs} ->
+		x :: toList {front = fs ; rear = rs }
+
+let rec put_list ls qs=
+	match ls with
+	|[] -> qs
+	|x0::xs -> put_list xs (put x0 qs);;
+
+
+2. Implement those operations in the pairs of list representation
+
+3. Create a dll library, say Q.dll
+
+4. Rewrite the code for breadth-first function so that it does *not*
+use lists but only queue operation as provided by the library Q.dll
+analogously to what we did for depth-first and Stack. This is not
+completely trivial, so do not get discouraged. 

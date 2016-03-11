@@ -1,0 +1,200 @@
+(*
+ESERCIZI (record, funzioni ho su liste, funzioni iterative)
+==========================================================
+
+
+Consideriamo il tipo
+*)
+
+ type valutazione = {stud : string ;  matr : int ; voto : int} ;;  
+
+(*
+che permette di definire la valutazione ottenuta da uno studente in un esame.
+Nel resto dell'esercizio si fa riferimento alla seguente lista di valutazioni:
+*)
+
+let vals = [
+  {stud="Bianchi"; matr=101 ; voto = 24} ;
+  {stud="Brambilla"; matr=150 ; voto = 28} ;
+  {stud="Rossi"; matr=153 ; voto = 15} ;
+  {stud="Verdi"; matr=110 ; voto = 28} ;
+  {stud="Brambilla"; matr=107 ; voto = 17} ;
+  {stud="Verdi"; matr=190 ; voto = 28} ;
+  {stud="Ferrari"; matr=160 ; voto = 18} ;
+  {stud="Verdi"; matr=180 ; voto = 18} ;
+  {stud="Rossi"; matr=111 ; voto = 15};
+  {stud="Gialli"; matr=135 ; voto = 15} ;
+  {stud="Neri"; matr=122 ; voto = 10}
+  ] ;;
+
+(*
+Le funzioni richieste vanno definite usando le funzioni higher-order definite su liste
+(List.map, List.exists, ecc.)
+
+
+1) Definire la funzione
+
+   getMatrVoti : valutazione list -> (int * int) list
+
+
+che, data una lista di valutazioni, estrae le coppie (matricola,voto)
+contenute nella lista
+
+Esempio:
+
+let voti = getMatrVoti vals ;; 
+// [(101, 24); (150, 28); (153, 15); (110, 28); (107, 17); (190, 28); (160, 18); (180, 18); (111, 15); (135, 15); (122, 10)]
+
+SOLUZIONE
+*)
+
+let getMatrVoti ls = 
+  let f = function
+    |{stud = s ; matr = m ; voto = v} -> (m,v)
+  List.map f ls;;
+
+(*
+2) Uno studente e' promosso se ha ottenuto un voto >= 18.
+
+Definire la funzione
+
+   isPromosso : valutazione -> bool
+
+che determina se lo studente nella valutazione e' promosso.
+
+Esempio
+
+ isPromosso {stud="Rossi"; matr=103 ; voto = 15} ;; // false 
+ isPromosso {stud="Ferrari"; matr=190 ; voto = 18} ;; // true
+   
+SOLUZIONE
+*)
+
+let isPromosso = function
+  |{stud = s ; matr = m ; voto = v} -> if v < 18 then false else true;;
+
+(*
+Usando la funzione isPromosso e una opportuna funzione higher-order, 
+definire la funzione
+  
+    getPromossi : valutazione list -> valutazione list
+
+che estrae da una lista di valutazioni la sottolista con le valutazioni
+degli studenti promossi e l'analoga funzione
+
+    getBocciati : valutazione list -> valutazione list
+
+Usando le funzioni definite sopra costruire le liste:
+
+plist :  lista delle coppie (matr,voto) degli studenti promossi
+// [(101, 24); (150, 28); (110, 28); (190, 28); (160, 18); (180, 18)]
+
+
+blist :  lista delle coppie (matr,voto) degli studenti bocciati
+//  [(153, 15); (107, 17); (111, 15); (135, 15); (122, 10)]
+
+SOLUZIONE
+*)
+
+let getPromossi ls = List.filter isPromosso ls;; 
+
+let getBocciati ls = List.filter (fun x -> not (isPromosso x)) ls;;
+ 
+(*
+3) La funzione
+
+  List.sortWith : ('a -> 'a -> int) -> 'a list -> 'a list
+
+permette di ordinare una lista usando una  funzione di ordinamento
+
+    compareTo : 'a -> 'a -> int
+    
+passata come parametro.
+Piu' precisamente,  la lista e' ordinata usando l'ordinamento < tale che
+
+    x1 < x2    se e solo se    compareTo x1 x2 <= -1 
+
+
+Definire la funzione
+
+    mysort : valutazione list -> valutazione list
+
+che ordina una lista di valutazioni in questo modo:
+- ordine decrescente rispetto al voto
+- a parita' di voto, ordine crescente rispetto alla matricola.
+
+Per definire mysort, applicare List.sortWith una opportuna funzione
+
+    cmp :  valutazione -> valutazione -> int
+
+
+Costruire la lista
+
+risultati : coppie (matr,voto) nella lista ordinata con mysort
+// [(110, 28); (150, 28); (190, 28); (101, 24); (160, 18); (180, 18); (107, 17); (111, 15); (135, 15); (153, 15); (122, 10)]
+*)
+
+let cmp st1 st2 =
+  match (st1,st2) with
+  |({stud = s1 ; matr = m1 ; voto = v1},{stud = s2 ; matr = m2 ; voto = v2}) -> 
+    if v1 < v2 then 1
+    elif v1 = v2 then 
+      if m1 < m2 then -1
+      elif m1 = m2 then 0
+      else 1
+    else -1;;
+
+List.sortWith (fun x -> fun y -> if x<y then -1 elif x=y then 0 else 1) [2;3;1;10;5;8;6;9;7];;
+
+let mysort ls = List.sortWith cmp ls;;
+
+getMatrVoti (mysort vals);;
+
+(*
+_______________________________________________________________________________________
+
+
+Definire la funzione iterativa
+
+    isuml :  int list -> int
+
+che calcola la somma degli elementi di una lista di interi.
+
+Usare la funzione ausiliaria  
+
+     sumlA : int list * int   -> int
+
+in cui nel secondo parametro viene accumulata la somma degli elementi.
+
+SOLUZIONE
+*)
+
+let isuml ls =
+  let rec sumlA = function
+  |([],m) -> m
+  |(x0::xs,m) -> sumlA (xs,x0+m)
+  let tot = sumlA (ls,0)
+  tot;; 
+
+
+//Confrontare sperimentalmentele   isuml e  
+
+let rec suml = function
+    | [] -> 0
+    | x :: xs -> x + suml xs;;
+
+(*
+Nell'interprete dare il comando 
+
+ #time
+
+che, dopo ogni computazione, stampa alcuni dati sulle risorse utilizzate (tempo CPU, uso garbage collector, ecc.)
+
+Provare ad eseguire delle chiamate della forma
+
+  suml [ 1 ..K ]      
+ isuml [ 1 .. K ]
+
+con K intero grande a piacere.
+Tenere presente che le liste sono costruite nello heap.
+*)
